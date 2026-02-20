@@ -71,7 +71,7 @@ def shop_trip() -> None:
 
         if lowest_shop:
             customer.location = shops[lowest_shop].location
-            datetime_format = "%m/%d/%Y, %H:%M:%S"
+            datetime_format = "%d/%m/%Y, %H:%M:%S"
             print(f"Date: {datetime.datetime.now().strftime(datetime_format)}")
             print(f"Thanks, {customer.name}, for your purchase!")
             print("You have bought:")

@@ -1,6 +1,6 @@
 import json
 from typing import List, Dict
-from datetime import datetime
+import datetime
 import os
 from decimal import Decimal
 
@@ -10,7 +10,10 @@ from app.car import trip_cost
 
 
 def shop_trip() -> None:
-    with open(os.path.join("app", "config.json"), "r") as config_file:
+    with open(
+            os.path.join(os.path.dirname(__file__), "config.json"),
+            "r"
+    ) as config_file:
         config_data = json.load(config_file)
 
     fuel_price = config_data["FUEL_PRICE"]
@@ -36,8 +39,7 @@ def shop_trip() -> None:
     for customer in customers:
         print(f"{customer.name} has {customer.money} dollars")
         lowest_price_dict = {}
-        lwst_shop = ""
-        total_price_shop = 0
+        lowest_shop = ""
 
         for shop in shops.values():
             trip_cost_for_one_direction = trip_cost(
@@ -50,10 +52,10 @@ def shop_trip() -> None:
             for product, product_amount in customer.product_cart.items():
                 shop_total_price += (Decimal(product_amount)
                                      * Decimal(shop.products[product]))
-            total_price_trip = round(
+            total_price_trip = (
                 Decimal(shop_total_price)
-                + Decimal(trip_cost_for_one_direction) * 2, 2
-            )
+                + Decimal(trip_cost_for_one_direction) * 2
+            ).quantize(Decimal("0.01"))
             print(f"{customer.name}'s trip to the "
                   f"{shop.name} costs {total_price_trip}")
 
@@ -61,28 +63,39 @@ def shop_trip() -> None:
                 lowest_price_dict[shop.name] = total_price_trip
 
         if lowest_price_dict:
-            lwst_shop = min(lowest_price_dict, key=lowest_price_dict.get)
-            total_price_shop = min(lowest_price_dict.values())
-            print(f"{customer.name} rides to {lwst_shop}\n")
+            lowest_shop = min(lowest_price_dict, key=lowest_price_dict.get)
+            print(f"{customer.name} rides to {lowest_shop}\n")
         else:
             print(f"{customer.name} doesn't have "
                   f"enough money to make a purchase in any shop")
 
-        if lwst_shop:
+        if lowest_shop:
+            customer.location = shops[lowest_shop].location
             datetime_format = "%m/%d/%Y, %H:%M:%S"
-            print(f"Date: {datetime.now().strftime(datetime_format)}")
+            print(f"Date: {datetime.datetime.now().strftime(datetime_format)}")
             print(f"Thanks, {customer.name}, for your purchase!")
             print("You have bought:")
+            total_price_shop = 0
             for product, product_amount in customer.product_cart.items():
+                product_price = ((product_amount
+                                 * Decimal(shops[lowest_shop]
+                                           .products[product]))
+                                 .quantize(Decimal("0.01")))
+                product_price = Decimal(product_price).normalize()
                 print(f"{product_amount} "
                       f"{product}s for "
-                      f"{product_amount * shops[lwst_shop].products[product]}"
+                      f"{product_price}"
                       f" dollars")
+                total_price_shop += product_price
             print(f"Total cost is {total_price_shop} dollars")
             print("See you again!\n")
             print(f"{customer.name} rides home")
+            result_money = ((customer.money
+                            - min(lowest_price_dict.values()))
+                            .quantize(Decimal("0.01")))
+            customer.money = result_money
             print(f"{customer.name} now has "
-                  f"{round(customer.money - total_price_shop, 2)} dollars\n")
+                  f"{result_money} dollars\n")
 
 
 shop_trip()

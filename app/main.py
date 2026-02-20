@@ -90,12 +90,9 @@ def shop_trip() -> None:
             print(f"Total cost is {total_price_shop} dollars")
             print("See you again!\n")
             print(f"{customer.name} rides home")
-            result_money = ((customer.money
+            result_money = ((Decimal(customer.money)
                             - min(lowest_price_dict.values()))
                             .quantize(Decimal("0.01")))
             customer.money = result_money
             print(f"{customer.name} now has "
                   f"{result_money} dollars\n")
-
-
-shop_trip()
